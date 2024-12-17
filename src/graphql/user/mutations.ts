@@ -1,3 +1,3 @@
 export const mutations = `#qraphql
-    createUser(firstName: String!, lastName: String!, email: String!, password: String!):String
+    createUser(firstName: String!, lastName: String, email: String!, password: String!):String
 `;

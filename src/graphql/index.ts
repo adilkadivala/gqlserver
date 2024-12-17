@@ -5,7 +5,7 @@ async function createApollogqlServer() {
   // Apollo Server
   const gqlServer = new ApolloServer({
     typeDefs: `
-          type Query {hello:String}
+          type Query {${User.quries}}
           type Mutation {${User.mutations}}
         `,
     resolvers: {

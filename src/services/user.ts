@@ -19,7 +19,6 @@ export interface getUserPayload {
 
 class UserService {
   // hashing password
-
   private static generateHash(salt: string, password: string) {
     const hashedPassword = createHmac("sha256", salt)
       .update(password)
@@ -53,6 +52,7 @@ class UserService {
    * static getUser for signin
    */
 
+  // getting user by email
   private static getUserByEmail(email: string) {
     return prismaClient.user.findUnique({ where: { email } });
   }
@@ -76,6 +76,18 @@ class UserService {
     // generaing gwt-token for sucessfully loged user
     const token = JWT.sign({ id: user.id, email: user.email }, JWT_SECRET);
     return token;
+  }
+
+  // getting user by id
+  public static async getUserById(id: string) {
+    return prismaClient.user.findUnique({ where: { id } });
+  }
+
+  /**
+   * decodeJWT
+   */
+  public static decodeJWT(token: string) {
+    return JWT.verify(token, JWT_SECRET);
   }
 }
 

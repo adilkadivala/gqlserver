@@ -3,6 +3,7 @@ import { expressMiddleware } from "@apollo/server/express4";
 import createApollogqlServer from "./graphql";
 import { json } from "body-parser";
 import cors from "cors";
+import UserService from "./services/user";
 
 async function init() {
   const app = express();
@@ -12,18 +13,24 @@ async function init() {
   app.use(json());
   app.use(cors());
 
-  // Root route
-  app.get("/", (req, res) => {
-    res.json({ message: "Server is running fine!" });
-  });
-
   // Apollo Server
   const gqlServer = await createApollogqlServer();
 
   // GraphQL Middleware
   app.use(
     "/graphql",
-    expressMiddleware(gqlServer) as unknown as express.RequestHandler
+    expressMiddleware(gqlServer, {
+      context: async ({ req }) => {
+        const token = req.headers["token"];
+
+        try {
+          const user = UserService.decodeJWT(token as string);
+          return { user };
+        } catch (error) {
+          return {};
+        }
+      },
+    }) as unknown as express.RequestHandler
   );
 
   // Start the server

@@ -14,13 +14,26 @@ datasource db {
 }
 
 model User {
-  id              String @id @default(uuid())
-  firstName       String @map("first_name")
+  id              String  @id @default(uuid())
+  firstName       String  @map("first_name")
   lastName        String? @map("last_name")
   profileImageUrl String? @map("profile_img_url")
-  email           String @unique
+  email           String  @unique
   password        String
   salt            String
+  Post            Post[]
 
   @@map("users")
+}
+
+model Post {
+  id               String    @id @default(uuid())
+  postTitle        String    @map("post_title")
+  postDescription  String    @map("post_description")
+  postCreationDate DateTime? @map("post_creation_date")
+  postAuthor       User?     @relation(fields: [authorName], references: [id])
+  authorName       String?   @map("author_name")
+  published        Boolean   @default(false)
+
+  @@map("posts")
 }

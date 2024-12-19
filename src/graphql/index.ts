@@ -1,5 +1,6 @@
 import { ApolloServer } from "@apollo/server";
 import { User } from "./user";
+import { Post } from "./posts";
 
 async function createApollogqlServer() {
   // Apollo Server
@@ -8,10 +9,15 @@ async function createApollogqlServer() {
           ${User.typeDefs}
           type Query {${User.quries}}
           type Mutation {${User.mutations}}
+
+          ${Post.typeDefs}
+          type Query {${Post.quries}}
+          type Mutation {${Post.mutations}}
+
         `,
     resolvers: {
-      Query: { ...User.resolvers.quries },
-      Mutation: { ...User.resolvers.mutations },
+      Query: { ...User.resolvers.quries, ...Post.resolvers.quries },
+      Mutation: { ...User.resolvers.mutations, ...Post.resolvers.mutations },
     },
   });
 

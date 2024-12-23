@@ -1,15 +1,26 @@
 services:
+  # postgres-database
   postgres:
     container_name: backend
     image: postgres
-    ports: 
+    ports:
       - 5432:5432
-    volumes: 
+    volumes:
       - postgres_data:/var/lib/postgresql/data
-    environment: 
+    environment:
       POSTGRES_USER: postgres
       POSTGRES_DB: backend
       POSTGRES_PASSWORD: backend
 
+  # caching with redis and redis-stack
+  redis-stack:
+    container_name: backend_redis_stack
+    image: redis/redis-stack:latest
+    ports:
+      - 6379:6379
+    volumes:
+      - redis-data:/data
+
 volumes:
   postgres_data:
+  redis-data:

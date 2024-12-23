@@ -4,7 +4,7 @@ export interface createPostPayload {
   postTitle: string;
   postDescription: string;
   postCreationDate?: number;
-  postAuthor: string;
+  postAuthor?: string;
 }
 export interface getPostPayload {
   postTitle: string;

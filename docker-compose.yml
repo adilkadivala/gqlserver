@@ -1,7 +1,7 @@
 services:
-  # postgres-database
+  # Postgres Database
   postgres:
-    container_name: backend
+    container_name: backend_postgres
     image: postgres
     ports:
       - 5432:5432
@@ -12,15 +12,26 @@ services:
       POSTGRES_DB: backend
       POSTGRES_PASSWORD: backend
 
-  # caching with redis and redis-stack
+  # Redis-Stack
   redis-stack:
     container_name: backend_redis_stack
     image: redis/redis-stack:latest
     ports:
       - 6379:6379
+      - 8001:8001
     volumes:
-      - redis-data:/data
+      - redis_data:/data
+
+  # NGINX
+  nginx:
+    image: nginx
+    container_name: backend_nginx
+    ports:
+      - 8080:80
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./static:/usr/share/nginx/html:ro
 
 volumes:
   postgres_data:
-  redis-data:
+  redis_data:

@@ -34,9 +34,11 @@ async function init() {
   );
 
   // Start the server
+
   app.listen(PORT, () => {
     console.log(`🚀 Server ready at http://localhost:${PORT}`);
     console.log(`🚀 gqlServer ready at http://localhost:${PORT}/graphql`);
+    console.log(`🚀 redis server ready at http://localhost:8001`);
   });
 }
 

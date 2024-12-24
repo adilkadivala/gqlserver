@@ -1,6 +1,7 @@
 import { prismaClient } from "../lib/db";
-import { createHmac, randomBytes } from "node:crypto"; // for making password hased
+import { createHmac, randomBytes } from "node:crypto"; // for making password hashed
 import JWT from "jsonwebtoken";
+import redis from "../lib/redis";
 
 // secret of JWT
 const JWT_SECRET = "$uper@nd$ecret";
@@ -30,15 +31,14 @@ class UserService {
   /**
    * static createUser
    */
-  public static createUser(payload: CreateUserPayload) {
+  public static async createUser(payload: CreateUserPayload) {
     const { firstName, lastName, email, password } = payload;
 
     // making password hashed
-
     const salt = randomBytes(32).toString("hex");
     const hashedPassword = UserService.generateHash(salt, password);
 
-    return prismaClient.user.create({
+    const createNewUser = await prismaClient.user.create({
       data: {
         firstName,
         lastName,
@@ -47,44 +47,76 @@ class UserService {
         password: hashedPassword,
       },
     });
+
+    // Clear cache for users list
+    await redis.del("users");
+
+    return createNewUser;
   }
+
   /**
    * static getUser for signin
    */
-
-  // getting user by email
   private static getUserByEmail(email: string) {
     return prismaClient.user.findUnique({ where: { email } });
   }
 
   public static async getUser(payload: getUserPayload) {
     const { email, password } = payload;
-    const user = await UserService.getUserByEmail(email);
+
+    // Check if the user exists in Redis
+    const cachedUser = await redis.get(`user:${email}`);
+    let user;
+
+    if (cachedUser) {
+      user = JSON.parse(cachedUser);
+    } else {
+      user = await UserService.getUserByEmail(email);
+
+      // Cache user in Redis
+      if (user) {
+        await redis.set(`user:${email}`, JSON.stringify(user), "EX", 3600); // Cache for 1 hour
+      }
+    }
 
     // if user not exist
-    if (!user) throw new Error("user not found");
+    if (!user) throw new Error("User not found");
 
-    // if it exist then
+    // Verify password
     const userSalt = user.salt;
     const userHashPassword = UserService.generateHash(userSalt, password);
-
-    // comapiring user with actual password
 
     if (userHashPassword !== user.password)
       throw new Error("Incorrect Password");
 
-    // generaing gwt-token for sucessfully loged user
+    // Generate JWT token
     const token = JWT.sign({ id: user.id, email: user.email }, JWT_SECRET);
     return token;
   }
 
-  // getting user by id
+  /**
+   * Get user by ID with Redis caching
+   */
   public static async getUserById(id: string) {
-    return prismaClient.user.findUnique({ where: { id } });
+    // Check if the user exists in Redis
+    const cachedUser = await redis.get(`user:${id}`);
+    if (cachedUser) {
+      return JSON.parse(cachedUser);
+    }
+
+    // Fetch from database if not in cache
+    const user = await prismaClient.user.findUnique({ where: { id } });
+
+    // Cache the user in Redis
+    if (user) {
+      await redis.set(`user:${id}`, JSON.stringify(user), "EX", 3600); // Cache for 1 hour
+    }
+
+    return user;
   }
 
   /**
-   * decodeJWT
+   * Decode JWT
    */
   public static decodeJWT(token: string) {
     return JWT.verify(token, JWT_SECRET);
